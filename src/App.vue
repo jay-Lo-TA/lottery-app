@@ -1,10 +1,13 @@
 <template>
   <div class="app">
-    <h1>🎰 数字滚轮抽奖</h1>
+    <h1 class="title">
+      <span class="title-icon">🎰</span>
+      数字滚轮抽奖
+    </h1>
 
     <div class="main-content">
       <!-- 左侧：滚轮和控制 -->
-      <div class="panel">
+      <div class="panel wheel-panel">
         <div class="panel-title">抽奖滚轮</div>
 
         <Wheel
@@ -22,14 +25,21 @@
             :disabled="isRunning || participants.length === 0"
             @click="handleStartLottery"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             开始抽奖
           </button>
-          <button class="btn btn-secondary" @click="handleReset">重置</button>
+          <button class="btn btn-secondary" @click="handleReset">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            重置
+          </button>
         </div>
 
         <div class="result-display" v-if="winner">
           <div class="result-label">中奖号码</div>
-          <div class="result-value">编号 {{ winner.number }} - {{ winner.name }}</div>
+          <div class="result-value">
+            <span class="winner-number">{{ winner.number }}</span>
+            <span class="winner-name">{{ winner.name }}</span>
+          </div>
         </div>
       </div>
 
@@ -155,6 +165,8 @@ const downloadFile = (content: string, filename: string, type: string) => {
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -162,10 +174,12 @@ const downloadFile = (content: string, filename: string, type: string) => {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Microsoft YaHei', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  background:
+    linear-gradient(180deg, #000000 0%, #0a0a0a 50%, #000000 100%);
   min-height: 100vh;
   padding: 20px;
+  color: #fafafa;
 }
 
 .app {
@@ -173,12 +187,18 @@ body {
   margin: 0 auto;
 }
 
-h1 {
+.title {
   text-align: center;
-  color: white;
+  color: #fafafa;
   margin-bottom: 30px;
   font-size: 2.5rem;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.title-icon {
+  margin-right: 12px;
 }
 
 .main-content {
@@ -191,21 +211,33 @@ h1 {
   .main-content {
     grid-template-columns: 1fr;
   }
+
+  .title {
+    font-size: 1.8rem;
+  }
 }
 
 .panel {
-  background: white;
-  border-radius: 20px;
+  background: #18181b;
+  border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.wheel-panel {
+  grid-row: span 2;
 }
 
 .panel-title {
   font-size: 1.3rem;
-  color: #333;
+  color: #fafafa;
   margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #667eea;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .controls {
@@ -217,65 +249,87 @@ h1 {
 }
 
 .btn {
-  padding: 15px 40px;
-  font-size: 1.2rem;
+  padding: 14px 36px;
+  font-size: 1.1rem;
   border: none;
-  border-radius: 50px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  transition: all 0.25s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.btn svg {
+  vertical-align: middle;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  background: #fafafa;
+  color: #000000;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+.btn-primary:hover:not(:disabled) {
+  background: #e5e5e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
 }
 
 .btn-primary:disabled {
-  background: #ccc;
+  background: #3f3f46;
+  color: #71717a;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
 }
 
 .btn-secondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  background: transparent;
+  color: #fafafa;
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .btn-secondary:hover {
-  background: #667eea;
-  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .result-display {
-  margin-top: 20px;
+  margin-top: 25px;
   padding: 30px;
   text-align: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 15px;
-  color: white;
+  background: #fafafa;
+  border-radius: 12px;
+  color: #000000;
 }
 
 .result-label {
-  font-size: 1.2rem;
-  margin-bottom: 10px;
-  opacity: 0.9;
+  font-size: 1rem;
+  margin-bottom: 12px;
+  color: #52525b;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .result-value {
   font-size: 2rem;
   font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.winner-number {
+  font-size: 3.5rem;
+  font-weight: 700;
+}
+
+.winner-name {
+  font-size: 1.5rem;
+  color: #3f3f46;
 }
 
 .history-section {

@@ -117,37 +117,75 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   padding: 30px 0;
+  position: relative;
+}
+
+/* Subtle scanline effect */
+.wheel-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.03) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 10;
+  border-radius: 12px;
 }
 
 .wheel-column {
-  width: 120px;
+  width: 140px;
   height: 120px;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 10px;
+  background: #000000;
+  border-radius: 12px;
   overflow: hidden;
   position: relative;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 0 30px rgba(255, 255, 255, 0.05),
+    0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Subtle border */
+.wheel-column::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 13px;
+  z-index: -1;
 }
 
 .wheel-column::before,
-.wheel-column::after {
+.wheel-column .top-mask,
+.wheel-column .bottom-mask {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   height: 30px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
 }
 
 .wheel-column::before {
   top: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
 }
 
-.wheel-column::after {
+.wheel-column .bottom-mask {
   bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
 }
 
 .wheel-strip {
@@ -165,21 +203,46 @@ onMounted(() => {
   justify-content: center;
   font-size: 4rem;
   font-weight: bold;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  background: linear-gradient(180deg, #2d2d44 0%, #1a1a2e 50%, #2d2d44 100%);
-  border-bottom: 1px solid #3d3d5c;
+  font-family: 'Microsoft YaHei', 'Courier New', monospace;
+  color: #fafafa;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(0, 0, 0, 0.5) 50%,
+    rgba(255, 255, 255, 0.03) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .wheel-digit.highlight {
-  color: #ffd700;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+  color: #ffffff;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 100%);
+  animation: digitPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes digitPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
 }
 
 .empty-wheel {
   padding: 60px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 1.2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .wheel-column {
+    width: 100px;
+    height: 100px;
+  }
+
+  .wheel-digit {
+    height: 100px;
+    font-size: 3rem;
+  }
 }
 </style>

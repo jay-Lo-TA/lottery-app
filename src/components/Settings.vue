@@ -85,18 +85,22 @@ const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => 
 
 <style scoped>
 .panel {
-  background: white;
-  border-radius: 20px;
+  background: #18181b;
+  border-radius: 16px;
   padding: 25px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .panel-title {
   font-size: 1.3rem;
-  color: #333;
+  color: #fafafa;
   margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #667eea;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .settings-group {
@@ -107,46 +111,56 @@ const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => 
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
-  color: #333;
+  color: #d4d4d8;
 }
 
 .settings-group input[type="number"] {
   width: 100%;
-  padding: 10px;
-  border: 2px solid #ddd;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   font-size: 1rem;
+  background: #000000;
+  color: #fafafa;
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
 
 .settings-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .checkbox-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.checkbox-group input {
+.checkbox-group input[type="checkbox"] {
   width: 20px;
   height: 20px;
   cursor: pointer;
+  accent-color: #fafafa;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .checkbox-group label {
   margin: 0;
   cursor: pointer;
+  color: #d4d4d8;
 }
 
 .stats {
   display: flex;
   justify-content: space-around;
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9ff;
-  border-radius: 10px;
+  margin-top: 25px;
+  padding: 20px;
+  background: #000000;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .stat-item {
@@ -154,13 +168,14 @@ const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => 
 }
 
 .stat-value {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: bold;
-  color: #667eea;
+  color: #fafafa;
 }
 
 .stat-label {
-  font-size: 0.9rem;
-  color: #666;
+  font-size: 0.85rem;
+  color: #71717a;
+  margin-top: 4px;
 }
 </style>
