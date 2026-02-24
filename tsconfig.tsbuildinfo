@@ -1,0 +1,1 @@
+{"root":["./src/env.d.ts","./src/main.ts","./src/composables/uselottery.ts","./src/composables/usestorage.ts","./src/types/index.ts","./src/app.vue","./src/components/history.vue","./src/components/participantlist.vue","./src/components/settings.vue","./src/components/wheel.vue"],"version":"5.9.3"}
