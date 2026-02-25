@@ -8,7 +8,7 @@
           class="wheel-digit"
           :class="{ highlight: index === targetIndex }"
         >
-          {{ String(num).padStart(3, '0') }}
+          {{ String(num).padStart(digitPadding, '0') }}
         </div>
       </div>
     </div>
@@ -20,33 +20,55 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import type { Participant } from '../types'
+import type { Participant, AnimationEffect } from '../types'
 
 const props = defineProps<{
   participants: Participant[]
   isRunning: boolean
-  winnerNumber: number | null
+  availableNumbers: number[]
   duration: number
-  spins: number
+  animationEffect?: AnimationEffect
 }>()
 
 const emit = defineEmits<{
-  (e: 'animationComplete'): void
+  (e: 'animationComplete', winnerNumber: number): void
 }>()
 
 const stripRef = ref<HTMLElement | null>(null)
 const targetIndex = ref<number>(0)
 const digitHeight = 120
 const isAnimating = ref(false)
+const currentWinnerNumber = ref<number | null>(null)
+
+// 计算动态位数（至少3位）
+const digitPadding = computed(() => {
+  return Math.max(3, String(props.participants.length).length)
+})
+
+// 动画效果对应的缓动函数
+const getEasingFunction = (effect: AnimationEffect | undefined): string => {
+  const easingMap: Record<AnimationEffect, string> = {
+    ease: 'ease',
+    easeIn: 'cubic-bezier(0.42, 0, 1, 1)',
+    easeOut: 'cubic-bezier(0, 0, 0.58, 1)',
+    easeInOut: 'cubic-bezier(0.42, 0, 0.58, 1)',
+    bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+  }
+  return easingMap[effect || 'easeOut']
+}
+
+// 滚动圈数常量
+const ROUNDS = 5
+const EXTRA_ROUNDS = 3  // 额外轮数，确保滚轮有足够的长度
 
 // 生成滚轮数字列表：重复参与者编号多次以支持动画
 const numberList = computed(() => {
   const count = props.participants.length
   if (count === 0) return []
-  // 需要足够的轮数来支持动画：spins 圈 + 额外余量
-  const rounds = props.spins + 3
+  // 需要足够的轮数来支持动画：ROUNDS 圈 + 额外余量
+  const totalRounds = ROUNDS + EXTRA_ROUNDS
   const numbers: number[] = []
-  for (let i = 0; i < rounds * count; i++) {
+  for (let i = 0; i < totalRounds * count; i++) {
     numbers.push((i % count) + 1)
   }
   return numbers
@@ -57,40 +79,49 @@ const animate = () => {
   if (!stripRef.value || isAnimating.value) return
 
   const count = props.participants.length
-  if (count === 0 || !props.winnerNumber) return
+  if (count === 0 || props.availableNumbers.length === 0) return
 
   isAnimating.value = true
 
-  // 计算目标位置：在最后一轮中找到中奖编号的位置
-  const rounds = props.spins + 2
-  const winnerRoundIndex = rounds * count + (props.winnerNumber - 1)
+  // 从可用编号池中随机选择一个作为中奖号码
+  const winnerNum = props.availableNumbers[Math.floor(Math.random() * props.availableNumbers.length)]
+  currentWinnerNumber.value = winnerNum
+
+  // 计算目标位置：停在倒数第二轮的末尾位置（确保滚动足够且停在正确数字上）
+  const totalRounds = ROUNDS + EXTRA_ROUNDS
+  // 停止位置 = 倒数第一轮的对应数字索引
+  const winnerRoundIndex = (totalRounds - 1) * count + (winnerNum - 1)
   targetIndex.value = winnerRoundIndex
 
   const targetPosition = winnerRoundIndex * digitHeight
 
   // 应用滚动
-  stripRef.value.style.transition = `transform ${props.duration}s cubic-bezier(0.25, 0.1, 0.25, 1)`
+  const easing = getEasingFunction(props.animationEffect)
+  stripRef.value.style.transition = `transform ${props.duration}s ${easing}`
   stripRef.value.style.transform = `translateY(-${targetPosition}px)`
 
   // 等待动画完成
   setTimeout(() => {
     isAnimating.value = false
-    emit('animationComplete')
+    emit('animationComplete', winnerNum)
   }, props.duration * 1000)
 }
 
-// 监听开始抽奖
-watch([() => props.isRunning, () => props.winnerNumber], async ([running, winnerNum]) => {
-  if (running && winnerNum && props.participants.length > 0 && stripRef.value && !isAnimating.value) {
-    await nextTick()
-    animate()
+// 监听 isRunning 变化
+watch(() => props.isRunning, async (running, oldRunning) => {
+  // 从 false 变为 true 时开始动画
+  if (running && !oldRunning) {
+    if (props.participants.length > 0 && stripRef.value && !isAnimating.value) {
+      // 等待下一个 tick，确保 availableNumbers 已更新
+      await nextTick()
+      if (props.availableNumbers.length > 0) {
+        animate()
+      }
+    }
   }
-})
 
-// 监听重置
-watch(() => props.winnerNumber, (val) => {
-  if (!val && stripRef.value) {
-    // 重置位置
+  // 从 true 变为 false 时重置位置（但只有在没有中奖者时才重置，保持中奖数字显示）
+  if (!running && oldRunning && stripRef.value && !currentWinnerNumber.value) {
     stripRef.value.style.transition = 'none'
     stripRef.value.style.transform = 'translateY(0)'
     targetIndex.value = 0
@@ -102,10 +133,8 @@ watch(() => props.winnerNumber, (val) => {
 onMounted(() => {
   if (stripRef.value) {
     stripRef.value.style.transform = 'translateY(0)'
-    // 如果已经设置了抽奖状态，执行动画
-    if (props.isRunning && props.winnerNumber && props.participants.length > 0) {
-      animate()
-    }
+    // 注意：onMounted 时如果 isRunning 为 true，应该由 watch 处理
+    // 这里不直接调用 animate()，避免重复执行
   }
 })
 </script>

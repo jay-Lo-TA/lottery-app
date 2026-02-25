@@ -14,14 +14,17 @@
     </div>
 
     <div class="settings-group">
-      <label>每次滚动圈数</label>
-      <input
-        type="number"
-        :value="settings.spins"
-        @input="updateSetting('spins', +($event.target as HTMLInputElement).value)"
-        min="1"
-        max="20"
-      />
+      <label>动画效果</label>
+      <select
+        :value="settings.animationEffect"
+        @change="updateSetting('animationEffect', ($event.target as HTMLSelectElement).value as AnimationEffect)"
+      >
+        <option value="ease">平滑过渡</option>
+        <option value="easeIn">缓入</option>
+        <option value="easeOut">缓出</option>
+        <option value="easeInOut">缓入缓出</option>
+        <option value="bounce">弹性效果</option>
+      </select>
     </div>
 
     <div class="settings-group checkbox-group">
@@ -62,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Settings } from '../types'
+import type { Settings, AnimationEffect } from '../types'
 
 const props = defineProps<{
   settings: Settings
@@ -124,6 +127,24 @@ const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => 
   color: #fafafa;
   transition: all 0.25s ease;
   font-family: inherit;
+}
+
+.settings-group select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #000000;
+  color: #fafafa;
+  transition: all 0.25s ease;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.settings-group select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .settings-group input:focus {

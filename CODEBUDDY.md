@@ -72,3 +72,37 @@ Tests are located in `tests/` directory:
 - `useLottery.test.ts` - Tests for lottery logic composable
 - `index.test.ts` - General tests
 - `types.test.ts` - Type tests
+
+### Development Workflow
+
+Before starting any work, create tasks in `TASKS.md`:
+
+1. **Create tasks** - List all work items using the format:
+   - `- [ ] **任务 N**: 任务描述`
+
+2. **Claim tasks** - Mark tasks as in-progress using Task tools:
+   - Use `TaskCreate` to create tasks
+   - Use `TaskUpdate` to update status (`pending` → `in_progress` → `completed`)
+
+3. **Update TASKS.md** - After completing each task, update the file:
+   - Mark completed: `- [x] **任务 N**: 描述`
+   - Add fix record with date, file locations, problem, and solution
+
+Example format (see TASKS.md for complete structure):
+```markdown
+## 任务列表
+
+- [ ] **任务 1**: 任务描述
+- [x] **任务 2**: 已完成任务
+
+---
+
+## 修复记录
+
+### 2026-02-24
+
+#### 任务 1: 修复描述
+- **位置**: `src/file.vue:行号`
+- **问题**: 问题描述
+- **修复**: 修复方案
+```

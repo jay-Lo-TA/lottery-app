@@ -10,9 +10,11 @@ export interface HistoryRecord {
   name: string
 }
 
+export type AnimationEffect = 'ease' | 'easeIn' | 'easeOut' | 'easeInOut' | 'bounce'
+
 export interface Settings {
   duration: number
-  spins: number
+  animationEffect: AnimationEffect
   allowRepeat: boolean
   showHistory: boolean
 }

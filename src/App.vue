@@ -13,9 +13,9 @@
         <Wheel
           :participants="participants"
           :is-running="isRunning"
-          :winner-number="winnerNumber"
+          :available-numbers="availableNumbers"
           :duration="settings.duration"
-          :spins="settings.spins"
+          :animation-effect="settings.animationEffect"
           @animation-complete="onAnimComplete"
         />
 
@@ -96,23 +96,28 @@ const {
   importParticipants,
   exportParticipants,
   startLottery,
+  setIsRunning,
   onAnimationComplete,
   resetWinner,
   clearHistory
 } = useLottery()
 
-const winnerNumber = ref<number | null>(null)
+const availableNumbers = ref<number[]>([])
 
-const handleStartLottery = async () => {
-  winnerNumber.value = await startLottery()
+const handleStartLottery = () => {
+  const numbers = startLottery()
+  if (numbers) {
+    availableNumbers.value = numbers
+    setIsRunning(true)  // 在 availableNumbers 设置后再设置 isRunning
+  }
 }
 
-const onAnimComplete = () => {
-  onAnimationComplete()
+const onAnimComplete = (winnerNumber: number) => {
+  onAnimationComplete(winnerNumber)
 }
 
 const handleReset = () => {
-  winnerNumber.value = null
+  availableNumbers.value = []
   resetWinner()
 }
 
@@ -126,7 +131,7 @@ const handleDeleteParticipant = (id: number) => {
 
 const handleClearAll = () => {
   clearAllParticipants()
-  winnerNumber.value = null
+  availableNumbers.value = []
   resetWinner()
 }
 

@@ -174,26 +174,27 @@ describe('useLottery', () => {
   })
 
   describe('startLottery', () => {
-    it('should return null when no participants', async () => {
-      const result = await lottery.startLottery()
+    it('should return null when no participants', () => {
+      const result = lottery.startLottery()
 
       expect(result).toBeNull()
     })
 
-    it('should return winner number when participants exist', async () => {
+    it('should return available numbers array when participants exist', () => {
       lottery.addParticipant('张三')
       lottery.addParticipant('李四')
 
-      const result = await lottery.startLottery()
+      const result = lottery.startLottery()
 
       expect(result).toBeDefined()
-      expect(result).toBeGreaterThanOrEqual(1)
-      expect(result).toBeLessThanOrEqual(2)
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toContain(1)
+      expect(result).toContain(2)
     })
 
-    it('should not record history until onAnimationComplete is called', async () => {
+    it('should not record history until onAnimationComplete is called', () => {
       lottery.addParticipant('张三')
-      await lottery.startLottery()
+      lottery.startLottery()
 
       // 历史记录应该为空，因为动画还没完成
       expect(lottery.history.value).toHaveLength(0)
@@ -201,20 +202,20 @@ describe('useLottery', () => {
   })
 
   describe('onAnimationComplete', () => {
-    it('should record history when animation completes', async () => {
+    it('should record history when animation completes', () => {
       lottery.addParticipant('张三')
-      await lottery.startLottery()
-      lottery.onAnimationComplete()
+      lottery.startLottery()
+      lottery.onAnimationComplete(1)
 
       expect(lottery.history.value).toHaveLength(1)
     })
   })
 
   describe('clearHistory', () => {
-    it('should clear all history after lottery', async () => {
+    it('should clear all history after lottery', () => {
       lottery.addParticipant('张三')
-      await lottery.startLottery()
-      lottery.onAnimationComplete()
+      lottery.startLottery()
+      lottery.onAnimationComplete(1)
 
       expect(lottery.history.value).toHaveLength(1)
 
@@ -232,20 +233,20 @@ describe('useLottery', () => {
       expect(lottery.totalParticipants.value).toBe(2)
     })
 
-    it('should calculate totalDraws after animation completes', async () => {
+    it('should calculate totalDraws after animation completes', () => {
       lottery.addParticipant('张三')
-      await lottery.startLottery()
-      lottery.onAnimationComplete()
+      lottery.startLottery()
+      lottery.onAnimationComplete(1)
 
       expect(lottery.totalDraws.value).toBe(1)
     })
 
-    it('should calculate uniqueWinners after animation completes', async () => {
+    it('should calculate uniqueWinners after animation completes', () => {
       lottery.addParticipant('张三')
       lottery.addParticipant('李四')
 
-      await lottery.startLottery()
-      lottery.onAnimationComplete()
+      lottery.startLottery()
+      lottery.onAnimationComplete(1)
 
       expect(lottery.uniqueWinners.value).toBe(1)
     })
