@@ -1,5 +1,5 @@
 import { ref, computed, watch } from 'vue'
-import type { Participant, HistoryRecord, Settings } from '../types'
+import type { Participant, HistoryRecord, Settings, AwardWinner, MultiAwardSettings } from '../types'
 import { useStorage } from './useStorage'
 
 // 唯一 ID 生成器
@@ -18,7 +18,8 @@ const generateNumber = (index: number, totalCount: number): string => {
 }
 
 export function useLottery() {
-  const { loadParticipants, loadHistory, loadSettings, saveParticipants, saveHistory, saveSettings } = useStorage()
+  const { loadParticipants, loadHistory, loadSettings, loadAwards, loadAwardWinners,
+    saveParticipants, saveHistory, saveSettings, saveAwards, saveAwardWinners } = useStorage()
 
   const participants = ref<Participant[]>(loadParticipants())
   const history = ref<HistoryRecord[]>(loadHistory())
@@ -26,9 +27,25 @@ export function useLottery() {
   const isRunning = ref(false)
   const winner = ref<Participant | null>(null)
 
+  // 多奖项模式状态
+  const multiAwardSettings = ref<MultiAwardSettings>(loadAwards())
+  const awardWinners = ref<AwardWinner[]>(loadAwardWinners())
+  const currentAwardIndex = ref(0)
+  const isMultiAwardMode = ref(false)
+
   // 监听设置变化并保存
   watch(settings, (newSettings) => {
     saveSettings(newSettings)
+  }, { deep: true })
+
+  // 监听多奖项设置变化并保存
+  watch(multiAwardSettings, (newSettings) => {
+    saveAwards(newSettings)
+  }, { deep: true })
+
+  // 监听中奖记录变化并保存
+  watch(awardWinners, (newWinners) => {
+    saveAwardWinners(newWinners)
   }, { deep: true })
 
   const totalParticipants = computed(() => participants.value.length)
@@ -193,6 +210,165 @@ export function useLottery() {
     saveHistory(history.value)
   }
 
+  // 多奖项模式方法
+  const getCurrentAward = computed(() => {
+    if (!multiAwardSettings.value.enabled) return null
+    return multiAwardSettings.value.awards[currentAwardIndex.value] || null
+  })
+
+  const getRemainingWinners = computed(() => {
+    if (!multiAwardSettings.value.enabled) return 0
+    const currentAward = getCurrentAward.value
+    if (!currentAward) return 0
+
+    const currentAwardWinners = awardWinners.value.filter(
+      w => w.awardId === currentAward.id
+    )
+    return currentAward.count - currentAwardWinners.length
+  })
+
+  const getCurrentAwardWinners = computed(() => {
+    if (!multiAwardSettings.value.enabled) return []
+    const currentAward = getCurrentAward.value
+    if (!currentAward) return []
+
+    return awardWinners.value.filter(w => w.awardId === currentAward.id)
+  })
+
+  const getAllAwardWinners = computed(() => {
+    return awardWinners.value
+  })
+
+  const getAwardWinnersByAward = (awardId: string) => {
+    return awardWinners.value.filter(w => w.awardId === awardId)
+  }
+
+  // 获取当前奖项的可用编号池
+  const getAvailableNumbersForCurrentAward = (): number[] | null => {
+    if (!multiAwardSettings.value.enabled) return null
+    const currentAward = getCurrentAward.value
+    if (!currentAward) return null
+
+    const numberPool = generateNumberPool()
+    const { allowRepeat } = settings.value
+
+    let availableNumbers = [...numberPool]
+    if (!allowRepeat) {
+      // 排除已经中奖的人
+      const winnerIds = new Set(awardWinners.value.map(w => w.participant.id))
+      availableNumbers = numberPool.filter(num => {
+        const participant = findParticipantByNumber(num)
+        return participant && !winnerIds.has(participant.id)
+      })
+    }
+
+    return availableNumbers
+  }
+
+  // 多奖项模式抽奖完成回调
+  const onMultiAwardAnimationComplete = (winnerNumber: number) => {
+    const currentAward = getCurrentAward.value
+    if (!currentAward) return
+
+    const winnerParticipant = findParticipantByNumber(winnerNumber)
+    if (!winnerParticipant) return
+
+    // 添加中奖记录
+    const awardWinner: AwardWinner = {
+      awardId: currentAward.id,
+      awardName: currentAward.name,
+      participant: winnerParticipant,
+      time: new Date().toLocaleString()
+    }
+    awardWinners.value.unshift(awardWinner)
+    saveAwardWinners(awardWinners.value)
+
+    isRunning.value = false
+
+    // 检查当前奖项是否已抽完
+    const remaining = getRemainingWinners.value
+    if (remaining <= 0) {
+      // 当前奖项已抽完，检查是否还有下一个奖项
+      if (currentAwardIndex.value < multiAwardSettings.value.awards.length - 1) {
+        // 还有下一个奖项
+        currentAwardIndex.value++
+      }
+    }
+  }
+
+  // 进入下一个奖项
+  const nextAward = () => {
+    if (currentAwardIndex.value < multiAwardSettings.value.awards.length - 1) {
+      currentAwardIndex.value++
+      return true
+    }
+    return false
+  }
+
+  // 切换到上一个奖项
+  const prevAward = () => {
+    if (currentAwardIndex.value > 0) {
+      currentAwardIndex.value--
+      return true
+    }
+    return false
+  }
+
+  // 重置多奖项模式
+  const resetMultiAward = () => {
+    currentAwardIndex.value = 0
+    awardWinners.value = []
+    saveAwardWinners([])
+  }
+
+  // 判断所有奖项是否已抽完
+  const isAllAwardsCompleted = computed(() => {
+    if (!multiAwardSettings.value.enabled) return false
+    return currentAwardIndex.value >= multiAwardSettings.value.awards.length - 1 &&
+      getRemainingWinners.value <= 0
+  })
+
+  // 获取奖项总数
+  const totalAwardsCount = computed(() => multiAwardSettings.value.awards.length)
+
+  // 获取已完成奖项数
+  const completedAwardsCount = computed(() => {
+    if (!multiAwardSettings.value.enabled) return 0
+    let count = 0
+    for (let i = 0; i < multiAwardSettings.value.awards.length; i++) {
+      const award = multiAwardSettings.value.awards[i]
+      const winners = awardWinners.value.filter(w => w.awardId === award.id)
+      if (winners.length >= award.count) {
+        count++
+      }
+    }
+    return count
+  })
+
+  // 更新多奖项设置
+  const updateMultiAwardSettings = (newSettings: MultiAwardSettings) => {
+    multiAwardSettings.value = newSettings
+    saveAwards(newSettings)
+  }
+
+  // 导出多奖项结果为 CSV
+  const exportAwardWinnersCSV = (): string => {
+    const headers = ['奖项', '编号', '姓名', '抽奖时间']
+    const rows = awardWinners.value.map(w => [
+      w.awardName,
+      w.participant.number,
+      w.participant.name,
+      w.time
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+
+    return csvContent
+  }
+
   return {
     participants,
     history,
@@ -202,6 +378,27 @@ export function useLottery() {
     totalParticipants,
     totalDraws,
     uniqueWinners,
+    // 多奖项模式
+    multiAwardSettings,
+    awardWinners,
+    currentAwardIndex,
+    isMultiAwardMode,
+    getCurrentAward,
+    getRemainingWinners,
+    getCurrentAwardWinners,
+    getAllAwardWinners,
+    getAwardWinnersByAward,
+    getAvailableNumbersForCurrentAward,
+    onMultiAwardAnimationComplete,
+    nextAward,
+    prevAward,
+    resetMultiAward,
+    isAllAwardsCompleted,
+    totalAwardsCount,
+    completedAwardsCount,
+    updateMultiAwardSettings,
+    exportAwardWinnersCSV,
+    // 原有方法
     addParticipant,
     deleteParticipant,
     clearAllParticipants,

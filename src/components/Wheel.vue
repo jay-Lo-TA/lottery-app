@@ -1,5 +1,11 @@
 <template>
   <div class="wheel-container" v-if="participants.length > 0">
+    <!-- 当前奖项信息 -->
+    <div v-if="currentAwardName" class="current-award">
+      <span class="award-badge" :style="{ backgroundColor: awardColor }">{{ currentAwardName }}</span>
+      <span class="remaining-count">剩余名额: {{ remainingCount }}</span>
+    </div>
+
     <div class="wheel-column">
       <div class="wheel-strip" ref="stripRef">
         <div
@@ -12,6 +18,16 @@
         </div>
       </div>
     </div>
+
+    <!-- 当前奖项已中奖名单 -->
+    <div v-if="currentAwardWinners && currentAwardWinners.length > 0" class="current-winners">
+      <div class="winners-title">已中奖</div>
+      <div class="winners-list">
+        <span v-for="winner in currentAwardWinners" :key="winner.participant.id" class="winner-tag">
+          {{ winner.participant.number }} - {{ winner.participant.name }}
+        </span>
+      </div>
+    </div>
   </div>
   <div v-else class="empty-wheel">
     请先添加参与者
@@ -20,7 +36,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import type { Participant, AnimationEffect } from '../types'
+import type { Participant, AnimationEffect, AwardWinner } from '../types'
 
 const props = defineProps<{
   participants: Participant[]
@@ -28,6 +44,11 @@ const props = defineProps<{
   availableNumbers: number[]
   duration: number
   animationEffect?: AnimationEffect
+  // 多奖项模式 props
+  currentAwardName?: string
+  awardColor?: string
+  remainingCount?: number
+  currentAwardWinners?: AwardWinner[]
 }>()
 
 const emit = defineEmits<{
@@ -142,11 +163,60 @@ onMounted(() => {
 <style scoped>
 .wheel-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   padding: 30px 0;
   position: relative;
+}
+
+.current-award {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.award-badge {
+  padding: 8px 20px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.remaining-count {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+}
+
+.current-winners {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 10px;
+}
+
+.winners-title {
+  text-align: center;
+  color: #71717a;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.winners-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.winner-tag {
+  padding: 4px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #d4d4d8;
 }
 
 /* Subtle scanline effect */
@@ -170,7 +240,7 @@ onMounted(() => {
 }
 
 .wheel-column {
-  width: 140px;
+  width: 200px;
   height: 120px;
   background: #000000;
   border-radius: 12px;

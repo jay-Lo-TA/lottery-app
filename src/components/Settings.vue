@@ -47,6 +47,12 @@
       <label for="showHistory">显示抽奖历史</label>
     </div>
 
+    <AwardSettings
+      :multi-award-settings="multiAwardSettings"
+      :participant-count="totalParticipants"
+      @update="emit('updateMultiAward', $event)"
+    />
+
     <div class="stats">
       <div class="stat-item">
         <div class="stat-value">{{ totalParticipants }}</div>
@@ -65,17 +71,20 @@
 </template>
 
 <script setup lang="ts">
-import type { Settings, AnimationEffect } from '../types'
+import type { Settings, AnimationEffect, MultiAwardSettings } from '../types'
+import AwardSettings from './AwardSettings.vue'
 
 const props = defineProps<{
   settings: Settings
   totalParticipants: number
   totalDraws: number
   uniqueWinners: number
+  multiAwardSettings: MultiAwardSettings
 }>()
 
 const emit = defineEmits<{
   (e: 'update', settings: Settings): void
+  (e: 'updateMultiAward', settings: MultiAwardSettings): void
 }>()
 
 const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
